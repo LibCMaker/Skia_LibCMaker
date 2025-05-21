@@ -614,16 +614,20 @@
   #  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   #  FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR}
 
+  set(lib_PFX_SHARED ${CMAKE_SHARED_LIBRARY_PREFIX})
+  set(lib_SFX_SHARED ${CMAKE_SHARED_LIBRARY_SUFFIX})
+  set(lib_PFX_STATIC ${CMAKE_STATIC_LIBRARY_PREFIX})
+  set(lib_SFX_STATIC ${CMAKE_STATIC_LIBRARY_SUFFIX})
 
   if(BUILD_SHARED_LIBS)
-    set(lib_PFX ${CMAKE_SHARED_LIBRARY_PREFIX})
-    set(lib_SFX ${CMAKE_SHARED_LIBRARY_SUFFIX})
+    set(lib_PFX ${lib_PFX_SHARED})
+    set(lib_SFX ${lib_SFX_SHARED})
     if(is_mac OR is_ios)
       set(lib_SFX ".so")
     endif()
   else()
-    set(lib_PFX ${CMAKE_STATIC_LIBRARY_PREFIX})
-    set(lib_SFX ${CMAKE_STATIC_LIBRARY_SUFFIX})
+    set(lib_PFX ${lib_PFX_STATIC})
+    set(lib_SFX ${lib_SFX_STATIC})
   endif()
 
   set(skia_INSTALL_INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}/skia")
@@ -650,13 +654,13 @@
   set(icu_common_DLL_LIB_FILE_NAME "icu_common.dll.lib")
   set(icu_common_DLL_PDB_FILE_NAME "icu_common.dll.pdb")
 
-  set(pathkit_FILE_NAME "${lib_PFX}pathkit${lib_SFX}")
+  set(pathkit_FILE_NAME "${lib_PFX}pathkit${lib_SFX_STATIC}")
   set(video_decoder_FILE_NAME "${lib_PFX}video_decoder${lib_SFX}")
   set(video_encoder_FILE_NAME "${lib_PFX}video_encoder${lib_SFX}")
 
-  set(particles_FILE_NAME "${lib_PFX}particles${lib_SFX}")
+  set(particles_FILE_NAME "${lib_PFX}particles${lib_SFX_STATIC}")
   set(skottie_FILE_NAME "${lib_PFX}skottie${lib_SFX}")
-  set(skresources_FILE_NAME "${lib_PFX}skresources${lib_SFX}")
+  set(skresources_FILE_NAME "${lib_PFX}skresources${lib_SFX_STATIC}")
   set(sksg_FILE_NAME "${lib_PFX}sksg${lib_SFX}")
   set(svg_FILE_NAME "${lib_PFX}svg${lib_SFX}")
 
@@ -830,12 +834,10 @@
   )
 
   #skia_static_library("pathkit")
-  if(NOT is_component_build)
-    install(
-      FILES "${skia_BUILD_DIR}/${pathkit_FILE_NAME}"
-      DESTINATION "${skia_INSTALL_LIB_DIR}"
-    )
-  endif()
+  install(
+    FILES "${skia_BUILD_DIR}/${pathkit_FILE_NAME}"
+    DESTINATION "${skia_INSTALL_LIB_DIR}"
+  )
 
   if(skia_enable_sksl)
     install(
@@ -904,12 +906,10 @@
   # -------------------------------------
   #static_library("particles")
   if(skia_enable_particles)
-    if(NOT is_component_build)
-      install(
-        FILES "${skia_BUILD_DIR}/${particles_FILE_NAME}"
-        DESTINATION "${skia_INSTALL_LIB_DIR}"
-      )
-    endif()
+    install(
+      FILES "${skia_BUILD_DIR}/${particles_FILE_NAME}"
+      DESTINATION "${skia_INSTALL_LIB_DIR}"
+    )
     install(
       DIRECTORY "${skia_SRC_DIR}/modules/particles/include"
       DESTINATION "${skia_INSTALL_MODULES_DIR}/particles"
@@ -980,12 +980,10 @@
   # modules/skresources/BUILD.gn
   # -------------------------------------
   # static_library("skresources")
-  if(NOT is_component_build)
-    install(
-      FILES "${skia_BUILD_DIR}/${skresources_FILE_NAME}"
-      DESTINATION "${skia_INSTALL_LIB_DIR}"
-    )
-  endif()
+  install(
+    FILES "${skia_BUILD_DIR}/${skresources_FILE_NAME}"
+    DESTINATION "${skia_INSTALL_LIB_DIR}"
+  )
   install(
     DIRECTORY "${skia_SRC_DIR}/modules/skresources/include"
     DESTINATION "${skia_INSTALL_MODULES_DIR}/skresources"

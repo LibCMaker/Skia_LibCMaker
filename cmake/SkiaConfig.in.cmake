@@ -919,14 +919,11 @@ set_property(TARGET SkiaInternal_pathkit APPEND PROPERTY
     Skia::skia
 )
 
-#if(NOT is_component_build)
-if(NOT @is_component_build@)
-  skia_set_target_properties(SkiaInternal_pathkit)
-  set_and_check(pathkit_LIB "${skia_LIB_DIR}/@pathkit_FILE_NAME@")
-  skia_set_imported_location(SkiaInternal_pathkit STATIC
-    "${pathkit_LIB}"
-  )
-endif()
+skia_set_target_properties(SkiaInternal_pathkit)
+set_and_check(pathkit_LIB "${skia_LIB_DIR}/@pathkit_FILE_NAME@")
+skia_set_imported_location(SkiaInternal_pathkit STATIC
+  "${pathkit_LIB}"
+)
 
 
 # -------------------------------------
@@ -1022,16 +1019,19 @@ set_property(TARGET Skia_skresources APPEND PROPERTY
 set_property(TARGET Skia_skresources APPEND PROPERTY
   INTERFACE_LINK_LIBRARIES
     Skia::skia
-    SkiaInternal_video_decoder
 )
 
-#if(NOT is_component_build )
-if(NOT @is_component_build@)
-  set_and_check(skresources_LIB "${skia_LIB_DIR}/@skresources_FILE_NAME@")
-  skia_set_imported_location(Skia_skresources STATIC
-    "${skresources_LIB}"
+if(@skia_use_ffmpeg@)
+  set_property(TARGET Skia_skresources APPEND PROPERTY
+    INTERFACE_LINK_LIBRARIES
+      SkiaInternal_video_decoder
   )
 endif()
+
+set_and_check(skresources_LIB "${skia_LIB_DIR}/@skresources_FILE_NAME@")
+skia_set_imported_location(Skia_skresources STATIC
+  "${skresources_LIB}"
+)
 
 
 # -------------------------------------
@@ -1336,12 +1336,10 @@ if(@skia_enable_particles@)
       Skia_skresources
   )
 
-  if(NOT @is_component_build@)
-    set_and_check(particles_LIB "${skia_LIB_DIR}/@particles_FILE_NAME@")
-    skia_set_imported_location(Skia_particles STATIC
-      "${particles_LIB}"
-    )
-  endif()
+  set_and_check(particles_LIB "${skia_LIB_DIR}/@particles_FILE_NAME@")
+  skia_set_imported_location(Skia_particles STATIC
+    "${particles_LIB}"
+  )
 endif()
 
 
