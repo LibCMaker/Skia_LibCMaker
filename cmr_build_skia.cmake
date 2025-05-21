@@ -73,6 +73,7 @@ endmacro()
 
 # LibCMaker options
 
+skia_option(not_fvisibility_hidden_patch false)  # default: false
 skia_option(export_icu_from_skia true)  # default: true
 
 

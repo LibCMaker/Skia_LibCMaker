@@ -1,0 +1,22 @@
+diff --git a/gn/skia/BUILD.gn b/gn/skia/BUILD.gn
+index 5948c05..860c86e 100644
+--- a/gn/skia/BUILD.gn
++++ b/gn/skia/BUILD.gn
+@@ -134,7 +134,7 @@ config("default") {
+     cflags += [
+       "-fstrict-aliasing",
+       "-fPIC",
+-      "-fvisibility=hidden",
++#      "-fvisibility=hidden",
+     ]
+     if (is_clang) {
+       # crbug.com/1257145
+@@ -145,7 +145,7 @@ config("default") {
+     } else {
+       cflags_cc += [ "-std=c++17" ]
+     }
+-    cflags_cc += [ "-fvisibility-inlines-hidden" ]
++#    cflags_cc += [ "-fvisibility-inlines-hidden" ]
+   }
+ 
+   if (current_cpu == "arm") {

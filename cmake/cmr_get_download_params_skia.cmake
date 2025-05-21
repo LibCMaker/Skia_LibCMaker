@@ -161,6 +161,9 @@
   apply_skia_source_patch("Src__Windows__Fix_MSVC_shared_build.patch")
   apply_skia_source_patch("Tools__Add_depth-1_to_git-clone_for_deps.patch")
 
+  if(not_fvisibility_hidden_patch)
+    apply_skia_source_patch("GN__Not_-fvisibility_hidden.patch")
+  endif()
   if(export_icu_from_skia)
     apply_skia_source_patch("GN__export_icu_from_skia.patch")
   endif()
