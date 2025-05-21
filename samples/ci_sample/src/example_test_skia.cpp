@@ -76,7 +76,7 @@
 #endif  // __APPLE__
 
 
-TEST(Examle, test_Skia)
+TEST(Example, test_Skia)
 {
   std::string resDir;
   std::string workDir;

@@ -86,7 +86,7 @@ static const UChar GMT_ID [] = { 0x0047, 0x004d, 0x0054, 0x0000 };
 #define FORMAT_MILLIS "%"
 #define FORMAT_SECONDS "%%"
 
-TEST(Examle, test_ICU) {
+TEST(Example, test_ICU) {
   int printUsage = 0;
   int printVersion = 0;
   int optInd = 1;
