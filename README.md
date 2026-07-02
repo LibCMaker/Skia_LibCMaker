@@ -1,4 +1,4 @@
-# LibCMaker_Skia
+# Skia_LibCMaker
 
 The CMake build scripts for the Skia library building with CMake.
 

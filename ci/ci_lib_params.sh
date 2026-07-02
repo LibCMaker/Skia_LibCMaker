@@ -31,6 +31,6 @@ fi
 
 cmr_LIB_DEPS_NAMES=(
   "LibCMaker"
-  "LibCMaker_GoogleTest"
-  "LibCMaker_Skia"
+  "GoogleTest_LibCMaker"
+  "Skia_LibCMaker"
 )
