@@ -34,13 +34,16 @@ if(BUILD_TESTING)
 
     # Files in graphics_* differ in some bits.
     set(platform_graphics_SRC_DIR "${data_SRC_DIR}/graphics_1")
+
     if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux" AND
         CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
       set(platform_graphics_SRC_DIR "${data_SRC_DIR}/graphics_2")
     endif()
+
     if(MSVC)
       set(platform_graphics_SRC_DIR "${data_SRC_DIR}/graphics_2")
     endif()
+
     if(ANDROID)
       if(NOT skia_use_fixed_gamma_text)
         if(ANDROID_ABI STREQUAL "armeabi-v7a")
@@ -62,8 +65,10 @@ if(BUILD_TESTING)
     else()
       set(test_BIN_DIR "${CMAKE_CURRENT_BINARY_DIR}")
     endif()
+
     set(font_BIN_DIR "${test_BIN_DIR}/fonts")
     set(data_BIN_DIR "${test_BIN_DIR}/data")
+
     if((MSVC OR XCODE) AND NOT IOS)
       set(test_BIN_DIR "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
     endif()
@@ -80,6 +85,8 @@ if(BUILD_TESTING)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
           "${icudata_LIB}"
           "${test_BIN_DIR}"
+
+        DEPENDS Skia::icudata
       )
 
       add_dependencies(${test_NAME}
@@ -189,6 +196,7 @@ if(BUILD_TESTING)
 
   cmr_common_test_part__ios()
   cmr_common_test_part__set_common_tests_properties()
+  cmr_common_test_part__set_cxx_c_standards()
 
 
   #-----------------------------------------------------------------------
@@ -199,10 +207,6 @@ if(BUILD_TESTING)
     PRIVATE
       ${test_src_DIR}/example_test.cpp
       ${test_src_DIR}/FileUtil.cpp
-  )
-  set_target_properties(${test_NAME} PROPERTIES
-    CXX_STANDARD 17
-    C_STANDARD 11
   )
 
   # Skia

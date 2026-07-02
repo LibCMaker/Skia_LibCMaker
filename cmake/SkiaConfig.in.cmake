@@ -23,6 +23,15 @@
 
 @PACKAGE_INIT@
 
+
+#if(cmake_gen_config)
+if(@cmake_gen_config@)
+  macro(set_and_check _var _file)
+    set(${_var} "${_file}")
+  endmacro()
+endif()
+
+
 #
 # CMakePackageConfigHelpers
 # -------------------------------------
@@ -38,14 +47,32 @@
 set(lib_PFX "@lib_PFX@")
 set(lib_SFX "@lib_SFX@")
 
-set(cmake_INCLUDE_DIR "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@")
-set(skia_INCLUDE_DIR "@PACKAGE_skia_INSTALL_INCLUDE_DIR@")
-set(skia_EXPERIMENTAL_DIR "@PACKAGE_skia_INSTALL_EXPERIMENTAL_DIR@")
-set(skia_MODULES_DIR "@PACKAGE_skia_INSTALL_MODULES_DIR@")
-set(skia_BIN_DIR "@PACKAGE_skia_INSTALL_BIN_DIR@")
-set(skia_DLL_DIR "@PACKAGE_skia_INSTALL_DLL_DIR@")
-set(skia_LIB_DIR "@PACKAGE_skia_INSTALL_LIB_DIR@")
-set(skia_PDB_DIR "@PACKAGE_skia_INSTALL_PDB_DIR@")
+#if(cmake_gen_config)
+if(@cmake_gen_config@)
+  set(skia_INCLUDE_DIR "${skia_SKIA_SRC_DIR}")
+  set(skia_EXPERIMENTAL_DIR "${skia_SKIA_SRC_DIR}/experimental")
+  set(skia_MODULES_DIR "${skia_SKIA_SRC_DIR}/modules")
+  set(skia_BIN_DIR "${skia_BUILD_DIR}")
+  set(skia_DLL_DIR "${skia_BUILD_DIR}")
+  set(skia_LIB_DIR "${skia_BUILD_DIR}")
+  set(skia_PDB_DIR "${skia_BUILD_DIR}")
+
+  set(skia_ICU_SRC_DIR "${skia_SKIA_SRC_DIR}/third_party/externals/icu/source")
+  list(APPEND skia_ICU_INCLUDE_DIR "${skia_ICU_SRC_DIR}/common")
+  list(APPEND skia_ICU_INCLUDE_DIR "${skia_ICU_SRC_DIR}/i18n")
+  list(APPEND skia_ICU_INCLUDE_DIR "${skia_ICU_SRC_DIR}/io")
+
+else()
+  set(skia_INCLUDE_DIR "@PACKAGE_skia_INSTALL_INCLUDE_DIR@")
+  set(skia_EXPERIMENTAL_DIR "@PACKAGE_skia_INSTALL_EXPERIMENTAL_DIR@")
+  set(skia_MODULES_DIR "@PACKAGE_skia_INSTALL_MODULES_DIR@")
+  set(skia_BIN_DIR "@PACKAGE_skia_INSTALL_BIN_DIR@")
+  set(skia_DLL_DIR "@PACKAGE_skia_INSTALL_DLL_DIR@")
+  set(skia_LIB_DIR "@PACKAGE_skia_INSTALL_LIB_DIR@")
+  set(skia_PDB_DIR "@PACKAGE_skia_INSTALL_PDB_DIR@")
+
+  set(skia_ICU_INCLUDE_DIR "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@")
+endif()
 
 #if(is_win)
 if(@is_win@)
@@ -692,6 +719,11 @@ endif()
 #skia_component("skia")
 add_library(Skia::skia ${lib_type} IMPORTED)
 
+#if(cmake_gen_config)
+if(@cmake_gen_config@)
+  add_dependencies(Skia::skia build_skia)
+endif()
+
 skia_set_target_properties(Skia::skia)
 
 set_and_check(skia_LIB "${skia_DLL_DIR}/@skia_FILE_NAME@")
@@ -1151,6 +1183,10 @@ if(@skia_use_icu@ AND NOT @skia_use_system_icu@)
     IMPORTED_LOCATION "${icudata_LIB}"
     IMPORTED_NO_SONAME ON
   )
+  #if(cmake_gen_config)
+  if(@cmake_gen_config@)
+    add_dependencies(Skia::icudata build_skia)
+  endif()
 
   #if(export_icu_from_skia)
   if(@export_icu_from_skia@)
@@ -1190,7 +1226,7 @@ if(@skia_use_icu@ AND NOT @skia_use_system_icu@)
       )
 
       set_property(TARGET SkiaInternal_icu APPEND PROPERTY
-        INTERFACE_INCLUDE_DIRECTORIES "${cmake_INCLUDE_DIR}"
+        INTERFACE_INCLUDE_DIRECTORIES "${skia_ICU_INCLUDE_DIR}"
       )
 
       set_property(TARGET SkiaInternal_icu APPEND PROPERTY
@@ -1210,7 +1246,7 @@ if(@skia_use_icu@ AND NOT @skia_use_system_icu@)
       add_library(ICU::ICU ALIAS Skia::skunicode)
 
       set_property(TARGET Skia::skunicode APPEND PROPERTY
-        INTERFACE_INCLUDE_DIRECTORIES "${cmake_INCLUDE_DIR}"
+        INTERFACE_INCLUDE_DIRECTORIES "${skia_ICU_INCLUDE_DIR}"
       )
 
       set_property(TARGET Skia::skunicode APPEND PROPERTY
@@ -1481,4 +1517,4 @@ endif()
 # CMakePackageConfigHelpers
 #
 
-#check_required_components("Skia")
+check_required_components("Skia")
