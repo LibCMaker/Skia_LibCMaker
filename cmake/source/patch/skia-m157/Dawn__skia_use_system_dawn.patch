@@ -1,0 +1,57 @@
+diff --git a/third_party/dawn/BUILD.gn b/third_party/dawn/BUILD.gn
+index 187722e..9880761 100644
+--- a/third_party/dawn/BUILD.gn
++++ b/third_party/dawn/BUILD.gn
+@@ -9,6 +9,32 @@
+ 
+ import("//gn/skia.gni")
+ import("//third_party/dawn/args.gni")
++import("//third_party/third_party.gni")
++
++
++if (skia_use_system_dawn) {
++  system("dawn") {
++    libs = [ "webgpu_dawn" ]
++
++    defines = []
++    if (dawn_enable_d3d11 && is_win) {
++      defines += [ "SK_DAWN_HAS_D3D11" ]
++    }
++    if (dawn_enable_d3d12 && is_win) {
++      defines += [ "SK_DAWN_HAS_D3D12" ]
++    }
++    if (dawn_enable_vulkan && (is_win || is_android || is_linux)) {
++      defines += [ "SK_DAWN_HAS_VULKAN" ]
++    }
++    if (dawn_enable_opengles && (is_android || is_linux)) {
++      defines += [ "SK_DAWN_HAS_OPENGLES" ]
++    }
++    if (dawn_enable_metal && (is_mac || is_ios)) {
++      defines += [ "SK_DAWN_HAS_METAL" ]
++    }
++  }
++} else {
++
+ 
+ if (is_win) {
+   # On Windows, the normal cc/cxx variables are just "clang" and "clang++"
+@@ -324,3 +350,6 @@ group("dawn") {
+ 
+   all_dependent_configs = [ ":dawn_defines" ]
+ }
++
++
++}
+diff --git a/third_party/dawn/args.gni b/third_party/dawn/args.gni
+index 755562f..583fa11 100644
+--- a/third_party/dawn/args.gni
++++ b/third_party/dawn/args.gni
+@@ -3,6 +3,8 @@
+ # found in the LICENSE file.
+ 
+ declare_args() {
++  skia_use_system_dawn = false
++
+   # All of these are the same as Dawn's versions for backwards compatibility.
+   dawn_enable_d3d11 = false
+   dawn_enable_d3d12 = is_win

@@ -73,27 +73,6 @@ if(BUILD_TESTING)
       set(test_BIN_DIR "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
     endif()
 
-
-    if(TARGET Skia::icudata)
-      get_target_property(icudata_LIB Skia::icudata IMPORTED_LOCATION)
-
-      add_custom_target(prepare_icudtl_dat
-        COMMAND
-          ${CMAKE_COMMAND} -E make_directory "${test_BIN_DIR}"
-
-        # `icudtl.dat` file
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-          "${icudata_LIB}"
-          "${test_BIN_DIR}"
-
-        DEPENDS Skia::icudata
-      )
-
-      add_dependencies(${test_NAME}
-        prepare_icudtl_dat
-      )
-    endif()
-
     add_custom_target(prepare_test_fonts
       COMMAND
         ${CMAKE_COMMAND} -E make_directory "${font_BIN_DIR}"
@@ -207,23 +186,33 @@ if(BUILD_TESTING)
     PRIVATE
       ${test_src_DIR}/example_test.cpp
       ${test_src_DIR}/FileUtil.cpp
+      ${test_src_DIR}/uprint.c
   )
 
   # Skia
   target_link_libraries(${test_NAME} PRIVATE
-    Skia::skshaper Skia::skunicode Skia::skia
+    # Specify all dependencies, not just Skia::skshaper, as Skia::skunicode_icu
+    # and Skia::skia will be put behind ICU and Dawn.
+    Skia::skshaper Skia::skunicode_icu Skia::skunicode Skia::skia
   )
 
-  if(export_icu_from_skia)
-    target_sources(${test_NAME}
-      PRIVATE
-        ${test_src_DIR}/uprint.c
+  # Dawn
+  if(skia_use_dawn AND skia_use_system_dawn)
+    target_link_libraries(${test_NAME} PRIVATE
+      dawn::webgpu_dawn
+    )
+  endif()
+
+  # ICU
+  if(skia_use_icu)
+    target_compile_definitions(${test_NAME} PRIVATE
+      SKIA_USE_ICU
     )
 
-    # ICU
-    #target_link_libraries(${test_NAME} PRIVATE ICU::i18n ICU::uc ICU::data)
-    target_link_libraries(${test_NAME} PRIVATE ICU::ICU)
-    # ICU is C++ library.
-    #set_target_properties(${test_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+    if(skia_use_system_icu)
+      target_link_libraries(${test_NAME} PRIVATE
+        ICU::io ICU::i18n ICU::uc ICU::data
+      )
+    endif()
   endif()
 endif()

@@ -27,25 +27,25 @@
 #
 
 set(upd_SKIA_SRC_URL "https://skia.googlesource.com/skia.git")
-set(upd_SKIA_BRANCH  "chrome/m${Skia_lib_VERSION}")
+set(upd_SKIA_BRANCH  "chrome/m${Skia_VERSION}")
 
 set(upd_DEPOT_TOOLS_URL "https://chromium.googlesource.com/chromium/tools/depot_tools.git")
-# Commit date is Fri Jan 07 23:44:16 2022.
-set(upd_DEPOT_TOOLS_COMMIT "d3cc7ad85ed680907978c3d125b51db0f6ca5ea8")
+# Commit date: Tue Oct 20 22:10:41 2026 -0700
+set(upd_DEPOT_TOOLS_COMMIT "f2ac30836f43e58e4f79a8d969a88057e7704ab2")
 
 
 #-----------------------------------------------------------------------
 # Paths
 #
 
-set(upd_SRC_DIR_NAME "skia-m${Skia_lib_VERSION}")
+set(upd_SRC_NAME "skia-m${Skia_VERSION}")
+set(upd_ARCHIVE_DIR "${CMAKE_CURRENT_LIST_DIR}/source")
 
-set(upd_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/source")
-set(upd_SRC_DIR    "${upd_SOURCE_DIR}/${upd_SRC_DIR_NAME}")
-set(upd_PATCH_DIR  "${upd_SOURCE_DIR}/patch/${upd_SRC_DIR_NAME}")
+set(upd_PATCH_DIR  "${upd_ARCHIVE_DIR}/patch/${upd_SRC_NAME}")
 
-set(upd_SKIA_SRC_DIR        "${upd_SRC_DIR}/skia")
-set(upd_DEPOT_TOOLS_SRC_DIR "${upd_SRC_DIR}/depot_tools")
+set(upd_MAIN_SRC_DIR        "${upd_ARCHIVE_DIR}/${upd_SRC_NAME}")
+set(upd_SKIA_SRC_DIR        "${upd_MAIN_SRC_DIR}/skia")
+set(upd_DEPOT_TOOLS_SRC_DIR "${upd_MAIN_SRC_DIR}/depot_tools")
 
 if(NOT "$ENV{PATH}" STRLESS "")
   if(CMAKE_HOST_WIN32 AND CMAKE_HOST_SYSTEM_NAME MATCHES "Windows"
@@ -70,35 +70,11 @@ set(skia_ENV
 # TODO
 #
 
-macro(upd_skia_option _option _value)
-  if(${_value})
-    set(_opt_value "true")
-  else()
-    set(_opt_value "false")
-  endif()
-  set(${_option} "${_opt_value}" CACHE STRING "${_option}")
-  unset(_opt_value)
-endmacro()
-
-
-#-----------------------------------------------------------------------
-# LibCMaker options
-#
-
-upd_skia_option(not_fvisibility_hidden_patch true)
-upd_skia_option(export_icu_from_skia true)
-
-
-#-----------------------------------------------------------------------
-# TODO
-#
-
 find_package(Git 2.17.1 REQUIRED)
 find_package(Python REQUIRED COMPONENTS Interpreter)
 
-if(Python_VERSION VERSION_LESS 2.7
-    OR Python_VERSION VERSION_GREATER 3.0 AND Python_VERSION VERSION_LESS 3.8)
-  cmr_print_error("depot_tools requires python 2.7 or 3.8.")
+if(Python_VERSION VERSION_LESS 3.9)
+  cmr_print_error("depot_tools requires Python 3.9+.")
 endif()
 
 find_program(tar_EXECUTABLE "tar" REQUIRED)
@@ -214,7 +190,7 @@ endif()
 
 function(upd_apply_skia_source_patch _name)
   set(${_name}_STAMP
-    "${upd_SRC_DIR}/patch__${_name}__.stamp"
+    "${upd_MAIN_SRC_DIR}/patch__${_name}__.stamp"
   )
   if(NOT EXISTS ${${_name}_STAMP})
     cmr_print_status("Apply Skia source patch: '${_name}'")
@@ -236,21 +212,7 @@ function(upd_apply_skia_source_patch _name)
   endif()
 endfunction()
 
-# upd_apply_skia_source_patch("GN__Android_iOS__Do_not_build__skia_c_api_example.patch")
-# upd_apply_skia_source_patch("GN__Windows__Fix_MSVC_x86_build.patch")
-# upd_apply_skia_source_patch("GN__Windows__Fix_link_deps.patch")
-# upd_apply_skia_source_patch("GN__iOS__Fix_link_deps.patch")
-# upd_apply_skia_source_patch("Src__Fix_for__skia_enable_sksl.patch")
-# upd_apply_skia_source_patch("Src__Fix_for__skia_use_sfntly.patch")
-# upd_apply_skia_source_patch("Src__Windows__Fix_MSVC_shared_build.patch")
-upd_apply_skia_source_patch("Tools__Add_depth-1_to_git-clone_for_deps.patch")
-
-if(not_fvisibility_hidden_patch)
-  # upd_apply_skia_source_patch("GN__Not_-fvisibility_hidden.patch")
-endif()
-if(export_icu_from_skia)
-  # upd_apply_skia_source_patch("GN__export_icu_from_skia.patch")
-endif()
+# upd_apply_skia_source_patch("Tools__Add_depth-1_to_git-clone_for_deps.patch")
 
 
 #-----------------------------------------------------------------------
@@ -258,13 +220,13 @@ endif()
 #
 
 set(git_sync_deps_STAMP
-  "${upd_SRC_DIR}/tools__git-sync-deps.stamp"
+  "${upd_MAIN_SRC_DIR}/tools__git-sync-deps_--shallow.stamp"
 )
 if(NOT EXISTS ${git_sync_deps_STAMP})
   cmr_print_status("Run 'tools/git-sync-deps'")
   execute_process(
     COMMAND ${CMAKE_COMMAND} -E env ${skia_ENV}
-      ${Python_EXECUTABLE} tools/git-sync-deps
+      ${Python_EXECUTABLE} tools/git-sync-deps --shallow
     WORKING_DIRECTORY ${upd_SKIA_SRC_DIR}
     RESULT_VARIABLE error_RESULT
   )
@@ -282,7 +244,7 @@ endif()
 #
 
 set(tar_create_STAMP
-  "${upd_SOURCE_DIR}/tools__tar-create.stamp"
+  "${upd_ARCHIVE_DIR}/tools__tar-create.stamp"
 )
 if(NOT EXISTS ${tar_create_STAMP})
   cmr_print_status("Run tar --create")
@@ -290,10 +252,10 @@ if(NOT EXISTS ${tar_create_STAMP})
     COMMAND ${tar_EXECUTABLE}
       # --verbose
       --create
-      --file "${upd_SRC_DIR_NAME}__NEW.tar.xz"
+      --file "${upd_SRC_NAME}__NEW.tar.xz"
       --use-compress-program "${xz_EXECUTABLE} --threads=${cmr_BUILD_MULTIPROC_CNT}"
-      "${upd_SRC_DIR_NAME}"
-    WORKING_DIRECTORY ${upd_SOURCE_DIR}
+      "${upd_SRC_NAME}"
+    WORKING_DIRECTORY ${upd_ARCHIVE_DIR}
     RESULT_VARIABLE error_RESULT
   )
   if(error_RESULT)

@@ -22,10 +22,16 @@
  ****************************************************************************/
 
 #include "include/core/SkCanvas.h"
+#include "include/core/SkData.h"
+#include "include/core/SkFont.h"
+#include "include/core/SkFontMgr.h"
 #include "include/core/SkRRect.h"
+#include "include/core/SkSpan.h"
 #include "include/core/SkSurface.h"
+#include "include/core/SkTypeface.h"
+#include "include/ports/SkFontMgr_data.h"
 #include "modules/skshaper/include/SkShaper.h"
-#include "modules/skunicode/include/SkUnicode.h"
+#include "modules/skunicode/include/SkUnicode_icu.h"
 
 #include "FileUtil.h"
 
@@ -117,7 +123,7 @@ TEST(Example, test_Skia)
 
   SkImageInfo imageInfo = SkImageInfo::Make(
     frameWidth, frameHeight, colorType, alphaType);
-  sk_sp<SkSurface> surface = SkSurface::MakeRaster(imageInfo);
+  sk_sp<SkSurface> surface = SkSurfaces::Raster(imageInfo);
   SkCanvas* canvas = surface->getCanvas();
 
   canvas->drawColor(SK_ColorWHITE);
@@ -177,16 +183,22 @@ TEST(Example, test_Skia)
   paint.setColor(0xff000000);
   paint.setStyle(SkPaint::kFill_Style);
 
-  auto unicode = SkUnicode::Make();
+  sk_sp<SkUnicode> unicode = SkUnicodes::ICU::Make();
   ASSERT_TRUE(unicode)
     << "Check if file 'icudtl.dat' exists in the folder with exe-file of test.";
 
   int yLine = 0;
 
   for (const auto& sample : samples) {
-    sk_sp<SkFontMgr> fontMgr = SkFontMgr::RefDefault();
     std::string fontFile = resDir + "fonts" + PATH_SEPARATOR + sample.font;
-    sk_sp<SkTypeface> typeface = fontMgr->makeFromFile(fontFile.c_str());
+    sk_sp<SkData> fontData = SkData::MakeFromFileName(fontFile.c_str());
+    sk_sp<SkData> fontDataSources[] = { fontData };
+
+    sk_sp<SkFontMgr> fontMgr = SkFontMgr_New_Custom_Data(SkSpan(fontDataSources, 1));
+
+    // sk_sp<SkTypeface> typeface = fontMgr->matchFamilyStyle("Roboto", SkFontStyle::Normal());
+    // sk_sp<SkTypeface> typeface = fontMgr->makeFromFile(fontFile.c_str());
+    sk_sp<SkTypeface> typeface = fontMgr->makeFromData(fontData);
 
     std::unique_ptr<SkShaper> shaper = SkShaper::Make(fontMgr);
     //SkShaper::PurgeCaches();  // NOTE: usefull in loop?

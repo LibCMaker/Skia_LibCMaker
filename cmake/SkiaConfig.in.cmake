@@ -44,35 +44,24 @@ endif()
 
 # NOTE: Use pattern '*.gn*' for search of usage of options in Skia source tree.
 
-set(lib_PFX "@lib_PFX@")
-set(lib_SFX "@lib_SFX@")
 
 #if(cmake_gen_config)
 if(@cmake_gen_config@)
   set(skia_INCLUDE_DIR "${skia_SKIA_SRC_DIR}")
-  set(skia_EXPERIMENTAL_DIR "${skia_SKIA_SRC_DIR}/experimental")
   set(skia_MODULES_DIR "${skia_SKIA_SRC_DIR}/modules")
-  set(skia_BIN_DIR "${skia_BUILD_DIR}")
-  set(skia_DLL_DIR "${skia_BUILD_DIR}")
-  set(skia_LIB_DIR "${skia_BUILD_DIR}")
-  set(skia_PDB_DIR "${skia_BUILD_DIR}")
-
-  set(skia_ICU_SRC_DIR "${skia_SKIA_SRC_DIR}/third_party/externals/icu/source")
-  list(APPEND skia_ICU_INCLUDE_DIR "${skia_ICU_SRC_DIR}/common")
-  list(APPEND skia_ICU_INCLUDE_DIR "${skia_ICU_SRC_DIR}/i18n")
-  list(APPEND skia_ICU_INCLUDE_DIR "${skia_ICU_SRC_DIR}/io")
-
+  set(skia_BIN_DIR "${skia_SKIA_BUILD_DIR}")
+  set(skia_DLL_DIR "${skia_SKIA_BUILD_DIR}")
+  set(skia_LIB_DIR "${skia_SKIA_BUILD_DIR}")
+  set(skia_PDB_DIR "${skia_SKIA_BUILD_DIR}")
 else()
   set(skia_INCLUDE_DIR "@PACKAGE_skia_INSTALL_INCLUDE_DIR@")
-  set(skia_EXPERIMENTAL_DIR "@PACKAGE_skia_INSTALL_EXPERIMENTAL_DIR@")
   set(skia_MODULES_DIR "@PACKAGE_skia_INSTALL_MODULES_DIR@")
   set(skia_BIN_DIR "@PACKAGE_skia_INSTALL_BIN_DIR@")
   set(skia_DLL_DIR "@PACKAGE_skia_INSTALL_DLL_DIR@")
   set(skia_LIB_DIR "@PACKAGE_skia_INSTALL_LIB_DIR@")
   set(skia_PDB_DIR "@PACKAGE_skia_INSTALL_PDB_DIR@")
-
-  set(skia_ICU_INCLUDE_DIR "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@")
 endif()
+
 
 #if(is_win)
 if(@is_win@)
@@ -141,27 +130,6 @@ macro(skia_find_framework name)
   endif()
 endmacro()
 
-macro(skia_set_target_properties name)
-  #if(NOT is_component_build)
-  if(NOT @is_component_build@)
-    set_target_properties(${name} PROPERTIES
-      IMPORTED_NO_SONAME ON
-      INTERFACE_COMPILE_FEATURES "cxx_std_17"
-      IMPORTED_LINK_INTERFACE_LANGUAGES "CXX"
-    )
-  endif()
-endmacro()
-
-macro(skia_set_imported_location _target _type _path)
-  add_library(${_target}_imported ${_type} IMPORTED)
-  set_property(TARGET ${_target}_imported APPEND PROPERTY
-    IMPORTED_LOCATION ${_path}
-  )
-  set_property(TARGET ${_target} APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES ${_target}_imported
-  )
-endmacro()
-
 
 #if(BUILD_SHARED_LIBS)
 if(@BUILD_SHARED_LIBS@)
@@ -172,549 +140,8 @@ endif()
 
 
 # -------------------------------------
-# third_party/BUILD.gn
-# -------------------------------------
-add_library(SkiaInternal_fontconfig INTERFACE)
-
-#if(skia_use_fontconfig)
-if(@skia_use_fontconfig@)
-  find_library(fontconfig_LIB
-    NAMES "fontconfig"
-    REQUIRED
-  )
-  skia_set_imported_location(SkiaInternal_fontconfig UNKNOWN
-    "${fontconfig_LIB}"
-  )
-endif()
-
-
-# -------------------------------------
-# gn/skia/BUILD.gn
-# -------------------------------------
-
-add_library(SkiaInternal_default INTERFACE)
-
-#if(NOT is_component_build)
-if(NOT @is_component_build@)
-  #if(is_ios)
-  if(@is_ios@)
-    skia_find_library("objc")
-    set_property(TARGET SkiaInternal_default APPEND PROPERTY
-      INTERFACE_LINK_LIBRARIES SkiaInternal_objc
-    )
-  endif()
-
-  #if(is_linux)
-  if(@is_linux@)
-    skia_find_library("pthread")
-    set_property(TARGET SkiaInternal_default APPEND PROPERTY
-      INTERFACE_LINK_LIBRARIES SkiaInternal_pthread
-    )
-  endif()
-endif()
-
-
-# -------------------------------------
 # BUILD.gn
 # -------------------------------------
-
-# optional("fontmgr_android")
-add_library(SkiaInternal_fontmgr_android INTERFACE)
-#if(NOT is_component_build AND skia_enable_fontmgr_android)
-if(NOT @is_component_build@ AND @skia_enable_fontmgr_android@)
-  set_property(TARGET SkiaInternal_fontmgr_android APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES SkiaInternal_typeface_freetype
-  )
-endif()
-
-# optional("fontmgr_custom")
-add_library(SkiaInternal_fontmgr_custom INTERFACE)
-#if(NOT is_component_build AND
-#    (skia_enable_fontmgr_custom_directory OR
-#    skia_enable_fontmgr_custom_embedded OR
-#    skia_enable_fontmgr_custom_empty))
-if(NOT @is_component_build@ AND
-    (@skia_enable_fontmgr_custom_directory@ OR
-    @skia_enable_fontmgr_custom_embedded@ OR
-    @skia_enable_fontmgr_custom_empty@))
-  set_property(TARGET SkiaInternal_fontmgr_custom APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES SkiaInternal_typeface_freetype
-  )
-endif()
-
-# optional("fontmgr_custom_directory")
-add_library(SkiaInternal_fontmgr_custom_directory INTERFACE)
-#if(NOT is_component_build AND skia_enable_fontmgr_custom_directory)
-if(NOT @is_component_build@ AND @skia_enable_fontmgr_custom_directory@)
-  set_property(TARGET SkiaInternal_fontmgr_custom_directory APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      SkiaInternal_fontmgr_custom
-      SkiaInternal_typeface_freetype
-  )
-endif()
-
-# optional("fontmgr_custom_embedded")
-add_library(SkiaInternal_fontmgr_custom_embedded INTERFACE)
-#if(NOT is_component_build AND skia_enable_fontmgr_custom_embedded)
-if(NOT @is_component_build@ AND @skia_enable_fontmgr_custom_embedded@)
-  set_property(TARGET SkiaInternal_fontmgr_custom_embedded APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      SkiaInternal_fontmgr_custom
-      SkiaInternal_typeface_freetype
-  )
-endif()
-
-# optional("fontmgr_custom_empty")
-add_library(SkiaInternal_fontmgr_custom_empty INTERFACE)
-#if(NOT is_component_build AND skia_enable_fontmgr_custom_empty)
-if(NOT @is_component_build@ AND @skia_enable_fontmgr_custom_empty@)
-  set_property(TARGET SkiaInternal_fontmgr_custom_empty APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      SkiaInternal_fontmgr_custom
-      SkiaInternal_typeface_freetype
-  )
-endif()
-
-# optional("fontmgr_fontconfig")
-add_library(SkiaInternal_fontmgr_fontconfig INTERFACE)
-#if(NOT is_component_build AND skia_enable_fontmgr_fontconfig)
-if(NOT @is_component_build@ AND @skia_enable_fontmgr_fontconfig@)
-  set_property(TARGET SkiaInternal_fontmgr_fontconfig APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES SkiaInternal_typeface_freetype
-  )
-endif()
-
-# optional("fontmgr_FontConfigInterface")
-add_library(SkiaInternal_fontmgr_FontConfigInterface INTERFACE)
-#if(NOT is_component_build AND skia_enable_fontmgr_FontConfigInterface)
-if(NOT @is_component_build@ AND @skia_enable_fontmgr_FontConfigInterface@)
-  set_property(TARGET SkiaInternal_fontmgr_FontConfigInterface APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      SkiaInternal_typeface_freetype
-      SkiaInternal_fontconfig
-  )
-endif()
-
-# optional("fontmgr_mac_ct")
-add_library(SkiaInternal_fontmgr_mac_ct INTERFACE)
-#if(NOT is_component_build AND skia_use_fonthost_mac)
-if(NOT @is_component_build@ AND @skia_use_fonthost_mac@)
-  #if(is_mac)
-  if(@is_mac@)
-    # AppKit symbols NSFontWeightXXX may be dlsym'ed.
-    skia_find_framework("AppKit")
-    skia_find_framework("ApplicationServices")
-    set_property(TARGET SkiaInternal_fontmgr_mac_ct APPEND PROPERTY
-      INTERFACE_LINK_LIBRARIES
-        SkiaInternal_AppKit
-        SkiaInternal_ApplicationServices
-    )
-  endif()
-
-  #if(is_ios)
-  if(@is_ios@)
-    skia_find_framework("CoreFoundation")
-    skia_find_framework("CoreGraphics")
-    skia_find_framework("CoreText")
-    skia_find_framework("UIKit")
-    set_property(TARGET SkiaInternal_fontmgr_mac_ct APPEND PROPERTY
-      INTERFACE_LINK_LIBRARIES
-        SkiaInternal_CoreFoundation
-        SkiaInternal_CoreGraphics
-        SkiaInternal_CoreText
-        # UIKit symbols UIFontWeightXXX may be dlsym'ed.
-        SkiaInternal_UIKit
-    )
-  endif()
-endif()
-
-# optional("fontmgr_win_gdi")
-add_library(SkiaInternal_fontmgr_win_gdi INTERFACE)
-#if(NOT is_component_build AND skia_enable_fontmgr_win_gdi)
-if(NOT @is_component_build@ AND @skia_enable_fontmgr_win_gdi@)
-  skia_find_library_win("Gdi32")
-  set_property(TARGET SkiaInternal_fontmgr_win_gdi APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES SkiaInternal_Gdi32
-  )
-endif()
-
-
-# optional("gpu")
-add_library(SkiaInternal_gpu INTERFACE)
-#if(skia_enable_gpu)
-if(@skia_enable_gpu@)
-  #if(skia_use_gl)
-  if(@skia_use_gl@)
-    set_property(TARGET SkiaInternal_gpu APPEND PROPERTY
-      INTERFACE_COMPILE_DEFINITIONS "SK_GL"
-    )
-
-    #if(NOT is_component_build)
-    if(NOT @is_component_build@)
-      #if(is_android)
-      if(@is_android@)
-        #if(DEFINED ndk_api AND ndk_api VERSION_GREATER_EQUAL 26)
-        if("@ndk_api@" VERSION_GREATER_EQUAL 26)
-          skia_find_library("android")
-          set_property(TARGET SkiaInternal_gpu APPEND PROPERTY
-            INTERFACE_LINK_LIBRARIES SkiaInternal_android
-          )
-        endif()
-
-      #elseif(skia_use_egl)
-      elseif(@skia_use_egl@)
-        skia_find_library("EGL")
-        set_property(TARGET SkiaInternal_gpu APPEND PROPERTY
-          INTERFACE_LINK_LIBRARIES SkiaInternal_EGL
-        )
-
-      #elseif(is_linux AND skia_use_x11)
-      elseif(@is_linux@ AND @skia_use_x11@)
-        skia_find_library("GL")
-        set_property(TARGET SkiaInternal_gpu APPEND PROPERTY
-          INTERFACE_LINK_LIBRARIES SkiaInternal_GL
-        )
-
-      #elseif(is_win AND NOT skia_enable_winuwp)
-      elseif(@is_win@ AND NOT @skia_enable_winuwp@)
-        #if(NOT target_cpu STREQUAL "arm64")
-        if(NOT "@target_cpu@" STREQUAL "arm64")
-          skia_find_library_win("OpenGL32")
-          set_property(TARGET SkiaInternal_gpu APPEND PROPERTY
-            INTERFACE_LINK_LIBRARIES SkiaInternal_OpenGL32
-          )
-        endif()
-      endif()
-    endif()
-  endif()
-
-  #if(skia_use_vulkan)
-  if(@skia_use_vulkan@)
-    set_property(TARGET SkiaInternal_gpu APPEND PROPERTY
-      INTERFACE_COMPILE_DEFINITIONS "SK_VULKAN"
-    )
-    #if(skia_enable_vulkan_debug_layers)
-    if(@skia_enable_vulkan_debug_layers@)
-      set_property(TARGET SkiaInternal_gpu APPEND PROPERTY
-        INTERFACE_COMPILE_DEFINITIONS "SK_ENABLE_VK_LAYERS"
-      )
-    endif()
-  endif()
-
-  #if(is_android AND (skia_use_gl OR skia_use_vulkan))
-  if(@is_android@ AND (@skia_use_gl@ OR @skia_use_vulkan@))
-    # this lib is required to link against AHardwareBuffer
-    #if(NOT is_component_build AND DEFINED ndk_api AND ndk_api VERSION_GREATER_EQUAL 26)
-    if(NOT @is_component_build@ AND "@ndk_api@" VERSION_GREATER_EQUAL 26)
-      skia_find_library("android")
-      set_property(TARGET SkiaInternal_gpu APPEND PROPERTY
-        INTERFACE_LINK_LIBRARIES SkiaInternal_android
-      )
-    endif()
-  endif()
-
-  #if(skia_use_direct3d)
-  if(@skia_use_direct3d@)
-    set_property(TARGET SkiaInternal_gpu APPEND PROPERTY
-      INTERFACE_COMPILE_DEFINITIONS "SK_DIRECT3D" "SK_ENABLE_SPIRV_CROSS"
-    )
-
-    #if(NOT is_component_build)
-    if(NOT @is_component_build@)
-      set_property(TARGET SkiaInternal_gpu APPEND PROPERTY
-        INTERFACE_LINK_LIBRARIES
-          SkiaInternal_d3d12allocator
-      )
-    endif()
-
-    #if(skia_enable_direct3d_debug_layer)
-    if(@skia_enable_direct3d_debug_layer@)
-      set_property(TARGET SkiaInternal_gpu APPEND PROPERTY
-        INTERFACE_COMPILE_DEFINITIONS "SK_ENABLE_D3D_DEBUG_LAYER"
-      )
-    endif()
-
-    #if(NOT is_component_build)
-    if(NOT @is_component_build@)
-      skia_find_library("d3d12")
-      set_property(TARGET SkiaInternal_gpu APPEND PROPERTY
-        INTERFACE_LINK_LIBRARIES SkiaInternal_d3d12
-      )
-      skia_find_library("dxgi")
-      set_property(TARGET SkiaInternal_gpu APPEND PROPERTY
-        INTERFACE_LINK_LIBRARIES SkiaInternal_dxgi
-      )
-      skia_find_library("d3dcompiler")
-      set_property(TARGET SkiaInternal_gpu APPEND PROPERTY
-        INTERFACE_LINK_LIBRARIES SkiaInternal_d3dcompiler
-      )
-    endif()
-  endif()
-
-  #if(skia_use_metal)
-  if(@skia_use_metal@)
-    set_property(TARGET SkiaInternal_gpu APPEND PROPERTY
-      INTERFACE_COMPILE_DEFINITIONS "SK_METAL"
-    )
-
-    #if(skia_enable_metal_debug_info)
-    if(@skia_enable_metal_debug_info@)
-      set_property(TARGET SkiaInternal_gpu APPEND PROPERTY
-        INTERFACE_COMPILE_DEFINITIONS "SK_ENABLE_MTL_DEBUG_INFO"
-      )
-    endif()
-
-    #if(NOT is_component_build)
-    if(NOT @is_component_build@)
-      skia_find_framework("Metal")
-      set_property(TARGET SkiaInternal_gpu APPEND PROPERTY
-        INTERFACE_LINK_LIBRARIES SkiaInternal_Metal
-      )
-      skia_find_framework("Foundation")
-      set_property(TARGET SkiaInternal_gpu APPEND PROPERTY
-        INTERFACE_LINK_LIBRARIES SkiaInternal_Foundation
-      )
-
-      #if(is_ios)
-      if(@is_ios@)
-        skia_find_framework("UIKit")
-        set_property(TARGET SkiaInternal_gpu APPEND PROPERTY
-          INTERFACE_LINK_LIBRARIES SkiaInternal_UIKit
-        )
-      endif()
-    endif()
-  endif()
-
-  #if(is_debug)
-  if(@is_debug@)
-    set_property(TARGET SkiaInternal_gpu APPEND PROPERTY
-      INTERFACE_COMPILE_DEFINITIONS "SK_ENABLE_DUMP_GPU"
-    )
-  endif()
-endif()  # if(skia_enable_gpu)
-
-
-# optional("gif")
-add_library(SkiaInternal_gif INTERFACE)
-#if(NOT skia_use_wuffs AND skia_use_libgifcodec)
-if(NOT @skia_use_wuffs@ AND @skia_use_libgifcodec@)
-  # TODO:
-  #if("True" STREQUAL
-  #    exec_script("gn/checkpath.py",
-  #                [ rebase_path(_libgifcodec_gni_path, root_build_dir) ],
-  #                "trim string"))
-    set_property(TARGET SkiaInternal_gif APPEND PROPERTY
-      INTERFACE_COMPILE_DEFINITIONS "SK_USE_LIBGIFCODEC"
-    )
-  #endif()
-endif()
-
-# optional("heif")
-add_library(SkiaInternal_heif INTERFACE)
-#if(skia_use_libheif)
-if(@skia_use_libheif@)
-  set_property(TARGET SkiaInternal_heif APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_HAS_HEIF_LIBRARY"
-  )
-endif()
-
-# optional("jpeg_decode")
-add_library(SkiaInternal_jpeg_decode INTERFACE)
-#if(skia_use_libjpeg_turbo_decode)
-if(@skia_use_libjpeg_turbo_decode@)
-  set_property(TARGET SkiaInternal_jpeg_decode APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_CODEC_DECODES_JPEG"
-  )
-endif()
-
-# optional("jpeg_encode")
-add_library(SkiaInternal_jpeg_encode INTERFACE)
-#if(skia_use_libjpeg_turbo_encode)
-if(@skia_use_libjpeg_turbo_encode@)
-  set_property(TARGET SkiaInternal_jpeg_encode APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_ENCODE_JPEG"
-  )
-endif()
-
-# optional("ndk_images")
-add_library(SkiaInternal_ndk_images INTERFACE)
-#if(skia_use_ndk_images)
-if(@skia_use_ndk_images@)
-  #if(NOT is_component_build)
-  if(NOT @is_component_build@)
-    skia_find_library("jnigraphics")
-    set_property(TARGET SkiaInternal_ndk_images APPEND PROPERTY
-      INTERFACE_LINK_LIBRARIES SkiaInternal_jnigraphics
-    )
-  endif()
-
-  set_property(TARGET SkiaInternal_ndk_images APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_ENABLE_NDK_IMAGES"
-  )
-endif()
-
-# optional("graphite")
-add_library(SkiaInternal_graphite INTERFACE)
-#if(skia_enable_graphite)
-if(@skia_enable_graphite@)
-  set_property(TARGET SkiaInternal_graphite APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_GRAPHITE_ENABLED"
-  )
-
-  #if(skia_use_metal)
-  if(@skia_use_metal@)
-    set_property(TARGET SkiaInternal_graphite APPEND PROPERTY
-      INTERFACE_COMPILE_DEFINITIONS "SK_METAL"
-    )
-
-    #if(skia_enable_metal_debug_info)
-    if(@skia_enable_metal_debug_info@)
-      set_property(TARGET SkiaInternal_graphite APPEND PROPERTY
-        INTERFACE_COMPILE_DEFINITIONS "SK_ENABLE_MTL_DEBUG_INFO"
-      )
-    endif()
-
-    #if(NOT is_component_build)
-    if(NOT @is_component_build@)
-      skia_find_framework("Metal")
-      set_property(TARGET SkiaInternal_graphite APPEND PROPERTY
-        INTERFACE_LINK_LIBRARIES SkiaInternal_Metal
-      )
-
-      skia_find_framework("Foundation")
-      set_property(TARGET SkiaInternal_graphite APPEND PROPERTY
-        INTERFACE_LINK_LIBRARIES SkiaInternal_Foundation
-      )
-    endif()
-  endif()
-endif()
-
-# optional("pdf")
-add_library(SkiaInternal_pdf INTERFACE)
-#if(skia_use_zlib AND skia_enable_pdf)
-if(@skia_use_zlib@ AND @skia_enable_pdf@)
-  set_property(TARGET SkiaInternal_pdf APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_SUPPORT_PDF"
-  )
-
-  #if(NOT is_component_build)
-  if(NOT @is_component_build@)
-    #if(skia_use_libjpeg_turbo_decode)
-    if(@skia_use_libjpeg_turbo_decode@)
-      set_property(TARGET SkiaInternal_pdf APPEND PROPERTY
-        INTERFACE_LINK_LIBRARIES SkiaInternal_jpeg_decode
-      )
-    endif()
-
-    #if(skia_use_libjpeg_turbo_encode)
-    if(@skia_use_libjpeg_turbo_encode@)
-      set_property(TARGET SkiaInternal_pdf APPEND PROPERTY
-        INTERFACE_LINK_LIBRARIES SkiaInternal_jpeg_encode
-      )
-    endif()
-  endif()
-
-  #if(skia_use_icu)
-  if(@skia_use_icu@)
-    #if(skia_use_harfbuzz AND skia_pdf_subset_harfbuzz)
-    if(@skia_use_harfbuzz@ AND @skia_pdf_subset_harfbuzz@)
-      set_property(TARGET SkiaInternal_pdf APPEND PROPERTY
-        INTERFACE_COMPILE_DEFINITIONS "SK_PDF_USE_HARFBUZZ_SUBSET"
-      )
-
-    #elseif(skia_use_sfntly)
-    elseif(@skia_use_sfntly@)
-      set_property(TARGET SkiaInternal_pdf APPEND PROPERTY
-        INTERFACE_COMPILE_DEFINITIONS "SK_PDF_USE_SFNTLY"
-      )
-    endif()
-  endif()
-endif()
-
-# optional("xps")
-add_library(SkiaInternal_xps INTERFACE)
-#if(skia_use_xps AND is_win)
-if(@skia_use_xps@ AND @is_win@)
-  set_property(TARGET SkiaInternal_xps APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_SUPPORT_XPS"
-  )
-endif()
-
-# optional("png_decode")
-add_library(SkiaInternal_png_decode INTERFACE)
-#if(skia_use_libpng_decode)
-if(@skia_use_libpng_decode@)
-  set_property(TARGET SkiaInternal_png_decode APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_CODEC_DECODES_PNG"
-  )
-endif()
-
-# optional("png_encode")
-add_library(SkiaInternal_png_encode INTERFACE)
-#if(skia_use_libpng_encode)
-if(@skia_use_libpng_encode@)
-  set_property(TARGET SkiaInternal_png_encode APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_ENCODE_PNG"
-  )
-endif()
-
-# optional("raw")
-add_library(SkiaInternal_raw INTERFACE)
-#if(skia_use_dng_sdk AND skia_use_libjpeg_turbo_decode AND skia_use_piex)
-if(@skia_use_dng_sdk@ AND @skia_use_libjpeg_turbo_decode@ AND @skia_use_piex@)
-  set_property(TARGET SkiaInternal_raw APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_CODEC_DECODES_RAW"
-  )
-endif()
-
-# optional("typeface_freetype")
-add_library(SkiaInternal_typeface_freetype INTERFACE)
-
-# optional("webp_decode")
-add_library(SkiaInternal_webp_decode INTERFACE)
-#if(skia_use_libwebp_decode)
-if(@skia_use_libwebp_decode@)
-  set_property(TARGET SkiaInternal_webp_decode APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_CODEC_DECODES_WEBP"
-  )
-endif()
-
-# optional("webp_encode")
-add_library(SkiaInternal_webp_encode INTERFACE)
-#if(skia_use_libwebp_encode)
-if(@skia_use_libwebp_encode@)
-  set_property(TARGET SkiaInternal_webp_encode APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_ENCODE_WEBP"
-  )
-endif()
-
-# optional("wuffs")
-add_library(SkiaInternal_wuffs INTERFACE)
-#if(skia_use_wuffs)
-if(@skia_use_wuffs@)
-  set_property(TARGET SkiaInternal_wuffs APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_HAS_WUFFS_LIBRARY"
-  )
-endif()
-
-# optional("xml")
-add_library(SkiaInternal_xml INTERFACE)
-#if(skia_use_expat)
-if(@skia_use_expat@)
-  set_property(TARGET SkiaInternal_xml APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_XML"
-  )
-endif()
-
-# optional("skvm_jit") {
-add_library(SkiaInternal_skvm_jit INTERFACE)
-#if(skia_enable_skvm_jit_when_possible)
-if(@skia_enable_skvm_jit_when_possible@)
-  set_property(TARGET SkiaInternal_skvm_jit APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SKVM_JIT_WHEN_POSSIBLE"
-  )
-endif()
-
 
 #skia_component("skia")
 add_library(Skia::skia ${lib_type} IMPORTED)
@@ -724,12 +151,15 @@ if(@cmake_gen_config@)
   add_dependencies(Skia::skia build_skia)
 endif()
 
-skia_set_target_properties(Skia::skia)
+set_property(TARGET Skia::skia APPEND PROPERTY
+  INTERFACE_INCLUDE_DIRECTORIES "${skia_INCLUDE_DIR}"
+)
 
 set_and_check(skia_LIB "${skia_DLL_DIR}/@skia_FILE_NAME@")
 set_target_properties(Skia::skia PROPERTIES
   IMPORTED_LOCATION "${skia_LIB}"
 )
+
 #if(is_win AND is_component_build)
 if(@is_win@ AND @is_component_build@)
   set_and_check(skia_DLL_LIB "${skia_LIB_DIR}/@skia_DLL_LIB_FILE_NAME@")
@@ -738,248 +168,112 @@ if(@is_win@ AND @is_component_build@)
   )
 endif()
 
-# Skia public API, generally provided by :skia.
-#config("skia_public")
-
-#include_dirs = [ "." ]
-set_property(TARGET Skia::skia APPEND PROPERTY
-  INTERFACE_INCLUDE_DIRECTORIES "${skia_INCLUDE_DIR}"
-)
-
-#if(is_component_build)
-if(@is_component_build@)
-  set_property(TARGET Skia::skia APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SKIA_DLL"
-  )
-endif()
-#if(is_fuchsia OR is_linux)
-if(@is_fuchsia@ OR @is_linux@)
-  set_property(TARGET Skia::skia APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_R32_SHIFT=16"
-  )
-endif()
-#if(NOT skia_enable_gpu)
-if(NOT @skia_enable_gpu@)
-  set_property(TARGET Skia::skia APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_SUPPORT_GPU=0"
-  )
-endif()
-#if(skia_enable_sksl)
-if(@skia_enable_sksl@)
-  set_property(TARGET Skia::skia APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_ENABLE_SKSL"
-  )
-endif()
-#if(skia_gl_standard STREQUAL "gles")
-if("@skia_gl_standard@" STREQUAL "gles")
-  set_property(TARGET Skia::skia APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_ASSUME_GL_ES=1"
-  )
-#elseif(skia_gl_standard STREQUAL "gl")
-elseif("@skia_gl_standard@" STREQUAL "gl")
-  set_property(TARGET Skia::skia APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_ASSUME_GL=1"
-  )
-#elseif(skia_gl_standard STREQUAL "webgl")
-elseif("@skia_gl_standard@" STREQUAL "webgl")
-  set_property(TARGET Skia::skia APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_ASSUME_WEBGL=1" "SK_USE_WEBGL"
-  )
-endif()
-#if(NOT skia_enable_skgpu_v1)
-if(NOT @skia_enable_skgpu_v1@)
-  set_property(TARGET Skia::skia APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_GPU_V1=0"
+#if(NOT is_component_build)
+if(NOT @is_component_build@)
+  set_target_properties(Skia::skia PROPERTIES
+    IMPORTED_NO_SONAME ON
+    # NOTE: 2026-09: Skia requires C++20
+    INTERFACE_COMPILE_FEATURES "cxx_std_20"
+    IMPORTED_LINK_INTERFACE_LANGUAGES "CXX"
   )
 endif()
 
-# Some older versions of the Clang toolchain change the visibility of
-# symbols decorated with API_AVAILABLE macro to be visible. Users of such
-# toolchains suppress the use of this macro till toolchain updates are made.
-#if(is_mac OR is_ios)
-if(@is_mac@ OR @is_ios@)
-  #if(skia_enable_api_available_macro)
-  if(@skia_enable_api_available_macro@)
-    set_property(TARGET Skia::skia APPEND PROPERTY
-      INTERFACE_COMPILE_DEFINITIONS "SK_ENABLE_API_AVAILABLE"
-    )
-  else()
-    #cflags_objcc += [ "-Wno-unguarded-availability" ]
-  endif()
-endif()
 
-#config("skia_library")
-set_property(TARGET Skia::skia APPEND PROPERTY
-  INTERFACE_COMPILE_DEFINITIONS "SKIA_IMPLEMENTATION=1"
-)
+# #if(is_win)
+# if(@is_win@)
+#   skia_find_library_win("Ole32")
+#   set_property(TARGET Skia::skia APPEND PROPERTY
+#     INTERFACE_LINK_LIBRARIES
+#       SkiaInternal_Ole32
+#   )
 
-set_property(TARGET Skia::skia APPEND PROPERTY
-  INTERFACE_LINK_LIBRARIES
-    SkiaInternal_fontmgr_FontConfigInterface
-    SkiaInternal_fontmgr_android
-    SkiaInternal_fontmgr_custom_directory
-    SkiaInternal_fontmgr_custom_embedded
-    SkiaInternal_fontmgr_custom_empty
-    SkiaInternal_fontmgr_fontconfig
-    #SkiaInternal_fontmgr_fuchsia
-    SkiaInternal_fontmgr_mac_ct
-    #SkiaInternal_fontmgr_win
-    SkiaInternal_fontmgr_win_gdi
-    SkiaInternal_gpu
-    SkiaInternal_graphite
-    SkiaInternal_pdf
-    #SkiaInternal_skcms
-    SkiaInternal_xps
-)
+#   skia_find_library_win("OleAut32")
+#   set_property(TARGET Skia::skia APPEND PROPERTY
+#     INTERFACE_LINK_LIBRARIES
+#       SkiaInternal_OleAut32
+#   )
 
-set_property(TARGET Skia::skia APPEND PROPERTY
-  INTERFACE_LINK_LIBRARIES
-    #SkiaInternal_android_utils
-    #SkiaInternal_arm64
-    #SkiaInternal_armv7
-    #SkiaInternal_avx
-    #SkiaInternal_crc32
-    #SkiaInternal_fontmgr_factory
-    SkiaInternal_gif
-    SkiaInternal_heif
-    #SkiaInternal_hsw
-    SkiaInternal_jpeg_decode
-    SkiaInternal_jpeg_encode
-    SkiaInternal_ndk_images
-    #SkiaInternal_none
-    SkiaInternal_png_decode
-    SkiaInternal_png_encode
-    SkiaInternal_raw
-    SkiaInternal_skvm_jit
-    #SkiaInternal_skx
-    #SkiaInternal_sse2
-    #SkiaInternal_sse41
-    #SkiaInternal_sse42
-    #SkiaInternal_ssse3
-    SkiaInternal_webp_decode
-    SkiaInternal_webp_encode
-    SkiaInternal_wuffs
-    SkiaInternal_xml
-)
+# else()
+#   skia_find_library("dl")
+#   set_property(TARGET Skia::skia APPEND PROPERTY
+#     INTERFACE_LINK_LIBRARIES
+#       SkiaInternal_dl
+#   )
+# endif()
 
-set_property(TARGET Skia::skia APPEND PROPERTY
-  INTERFACE_LINK_LIBRARIES
-    SkiaInternal_default
-)
+# #if(is_android)
+# if(@is_android@)
+#   skia_find_library("EGL")
+#   set_property(TARGET Skia::skia APPEND PROPERTY
+#     INTERFACE_LINK_LIBRARIES
+#       SkiaInternal_EGL
+#   )
+#   skia_find_library("GLESv2")
+#   set_property(TARGET Skia::skia APPEND PROPERTY
+#     INTERFACE_LINK_LIBRARIES
+#       SkiaInternal_GLESv2
+#   )
+#   skia_find_library("log")
+#   set_property(TARGET Skia::skia APPEND PROPERTY
+#     INTERFACE_LINK_LIBRARIES
+#       SkiaInternal_log
+#   )
+# endif()
 
-#if(is_win)
-if(@is_win@)
-  skia_find_library_win("Ole32")
-  set_property(TARGET Skia::skia APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      SkiaInternal_Ole32
-  )
+# #if(is_linux OR target_cpu STREQUAL "wasm")
+# if(@is_linux@ OR "@target_cpu@" STREQUAL "wasm")
+#   #if(skia_use_egl)
+#   if(@skia_use_egl@)
+#     skia_find_library("GLESv2")
+#     set_property(TARGET Skia::skia APPEND PROPERTY
+#       INTERFACE_LINK_LIBRARIES
+#         SkiaInternal_GLESv2
+#     )
+#   endif()
+# endif()
 
-  skia_find_library_win("OleAut32")
-  set_property(TARGET Skia::skia APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      SkiaInternal_OleAut32
-  )
+# #if(is_mac)
+# if(@is_mac@)
+#   skia_find_framework("ApplicationServices")
+#   set_property(TARGET Skia::skia APPEND PROPERTY
+#     INTERFACE_LINK_LIBRARIES
+#       SkiaInternal_ApplicationServices
+#   )
+#   skia_find_framework("OpenGL")
+#   set_property(TARGET Skia::skia APPEND PROPERTY
+#     INTERFACE_LINK_LIBRARIES
+#       SkiaInternal_OpenGL
+#   )
+# endif()
 
-else()
-  skia_find_library("dl")
-  set_property(TARGET Skia::skia APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      SkiaInternal_dl
-  )
-endif()
-
-#if(is_android)
-if(@is_android@)
-  skia_find_library("EGL")
-  set_property(TARGET Skia::skia APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      SkiaInternal_EGL
-  )
-  skia_find_library("GLESv2")
-  set_property(TARGET Skia::skia APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      SkiaInternal_GLESv2
-  )
-  skia_find_library("log")
-  set_property(TARGET Skia::skia APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      SkiaInternal_log
-  )
-endif()
-
-#if(is_linux OR target_cpu STREQUAL "wasm")
-if(@is_linux@ OR "@target_cpu@" STREQUAL "wasm")
-  #if(skia_use_egl)
-  if(@skia_use_egl@)
-    skia_find_library("GLESv2")
-    set_property(TARGET Skia::skia APPEND PROPERTY
-      INTERFACE_LINK_LIBRARIES
-        SkiaInternal_GLESv2
-    )
-  endif()
-endif()
-
-#if(is_mac)
-if(@is_mac@)
-  skia_find_framework("ApplicationServices")
-  set_property(TARGET Skia::skia APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      SkiaInternal_ApplicationServices
-  )
-  skia_find_framework("OpenGL")
-  set_property(TARGET Skia::skia APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      SkiaInternal_OpenGL
-  )
-endif()
-
-#if(is_ios)
-if(@is_ios@)
-  skia_find_framework("CoreFoundation")
-  set_property(TARGET Skia::skia APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      SkiaInternal_CoreFoundation
-  )
-  skia_find_framework("CoreGraphics")
-  set_property(TARGET Skia::skia APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      SkiaInternal_CoreGraphics
-  )
-  skia_find_framework("CoreText")
-  set_property(TARGET Skia::skia APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      SkiaInternal_CoreText
-  )
-  skia_find_framework("ImageIO")
-  set_property(TARGET Skia::skia APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      SkiaInternal_ImageIO
-  )
-  skia_find_framework("MobileCoreServices")
-  set_property(TARGET Skia::skia APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      SkiaInternal_MobileCoreServices
-  )
-endif()
-# END of skia_component("skia")
-
-
-#skia_static_library("pathkit")
-add_library(SkiaInternal_pathkit INTERFACE)
-
-# NOTE: pathkit needs 'config("skia_public")'
-set_property(TARGET SkiaInternal_pathkit APPEND PROPERTY
-  INTERFACE_LINK_LIBRARIES
-    Skia::skia
-)
-
-skia_set_target_properties(SkiaInternal_pathkit)
-set_and_check(pathkit_LIB "${skia_LIB_DIR}/@pathkit_FILE_NAME@")
-skia_set_imported_location(SkiaInternal_pathkit STATIC
-  "${pathkit_LIB}"
-)
-
+# #if(is_ios)
+# if(@is_ios@)
+#   skia_find_framework("CoreFoundation")
+#   set_property(TARGET Skia::skia APPEND PROPERTY
+#     INTERFACE_LINK_LIBRARIES
+#       SkiaInternal_CoreFoundation
+#   )
+#   skia_find_framework("CoreGraphics")
+#   set_property(TARGET Skia::skia APPEND PROPERTY
+#     INTERFACE_LINK_LIBRARIES
+#       SkiaInternal_CoreGraphics
+#   )
+#   skia_find_framework("CoreText")
+#   set_property(TARGET Skia::skia APPEND PROPERTY
+#     INTERFACE_LINK_LIBRARIES
+#       SkiaInternal_CoreText
+#   )
+#   skia_find_framework("ImageIO")
+#   set_property(TARGET Skia::skia APPEND PROPERTY
+#     INTERFACE_LINK_LIBRARIES
+#       SkiaInternal_ImageIO
+#   )
+#   skia_find_framework("MobileCoreServices")
+#   set_property(TARGET Skia::skia APPEND PROPERTY
+#     INTERFACE_LINK_LIBRARIES
+#       SkiaInternal_MobileCoreServices
+#   )
+# endif()
 
 # -------------------------------------
 # END of BUILD.gn
@@ -987,322 +281,105 @@ skia_set_imported_location(SkiaInternal_pathkit STATIC
 
 
 # -------------------------------------
-# experimental/ffmpeg/BUILD.gn
+# /modules
 # -------------------------------------
-#if(skia_use_ffmpeg)
-if(@skia_use_ffmpeg@)
-  add_library(SkiaInternal_video_decoder INTERFACE)
-  add_library(SkiaInternal_video_encoder INTERFACE)
 
-  #if(NOT is_component_build )
-  if(NOT @is_component_build@)
-    skia_set_target_properties(SkiaInternal_video_decoder)
-    set_and_check(video_decoder_LIB "${skia_LIB_DIR}/@video_decoder_FILE_NAME@")
-    skia_set_imported_location(SkiaInternal_video_decoder STATIC
-      "${video_decoder_LIB}"
-    )
+#if(skia_enable_bentleyottmann)
+if(@skia_enable_bentleyottmann@)
+  add_library(Skia::bentleyottmann ${lib_type} IMPORTED)
 
-    skia_set_target_properties(SkiaInternal_video_encoder)
-    set_and_check(video_encoder_LIB "${skia_LIB_DIR}/@video_encoder_FILE_NAME@")
-    skia_set_imported_location(SkiaInternal_video_encoder STATIC
-      "${video_encoder_LIB}"
-    )
+  set_property(TARGET Skia::bentleyottmann APPEND PROPERTY
+    INTERFACE_INCLUDE_DIRECTORIES "${skia_MODULES_DIR}/bentleyottmann/include"
+  )
 
-    skia_find_library("swscale")
-    skia_find_library("avcodec")
-    skia_find_library("avformat")
-    skia_find_library("avutil")
+  set_and_check(bentleyottmann_LIB "${skia_LIB_DIR}/@bentleyottmann_FILE_NAME@")
+  set_target_properties(Skia::bentleyottmann PROPERTIES
+    IMPORTED_LOCATION "${bentleyottmann_LIB}"
+  )
 
-    set_property(TARGET SkiaInternal_video_decoder APPEND PROPERTY
-      INTERFACE_LINK_LIBRARIES
-        Skia::skia
-    )
-    set_property(TARGET SkiaInternal_video_decoder APPEND PROPERTY
-      INTERFACE_LINK_LIBRARIES
-        SkiaInternal_swscale
-    )
-    set_property(TARGET SkiaInternal_video_decoder APPEND PROPERTY
-      INTERFACE_LINK_LIBRARIES
-        SkiaInternal_avcodec
-    )
-    set_property(TARGET SkiaInternal_video_decoder APPEND PROPERTY
-      INTERFACE_LINK_LIBRARIES
-        SkiaInternal_avformat
-    )
-    set_property(TARGET SkiaInternal_video_decoder APPEND PROPERTY
-      INTERFACE_LINK_LIBRARIES
-        SkiaInternal_avutil
-    )
-
-    set_property(TARGET SkiaInternal_video_encoder APPEND PROPERTY
-      INTERFACE_LINK_LIBRARIES
-        Skia::skia
-    )
-    set_property(TARGET SkiaInternal_video_encoder APPEND PROPERTY
-      INTERFACE_LINK_LIBRARIES
-        SkiaInternal_swscale
-    )
-    set_property(TARGET SkiaInternal_video_encoder APPEND PROPERTY
-      INTERFACE_LINK_LIBRARIES
-        SkiaInternal_avcodec
-    )
-    set_property(TARGET SkiaInternal_video_encoder APPEND PROPERTY
-      INTERFACE_LINK_LIBRARIES
-        SkiaInternal_avformat
-    )
-    set_property(TARGET SkiaInternal_video_encoder APPEND PROPERTY
-      INTERFACE_LINK_LIBRARIES
-        SkiaInternal_avutil
+  #if(is_win AND is_component_build)
+  if(@is_win@ AND @is_component_build@)
+    set_and_check(bentleyottmann_DLL_LIB "${skia_LIB_DIR}/@bentleyottmann_DLL_LIB_FILE_NAME@")
+    set_target_properties(Skia::bentleyottmann PROPERTIES
+      IMPORTED_IMPLIB "${bentleyottmann_DLL_LIB}"
     )
   endif()
-endif()
 
-
-# -------------------------------------
-# modules/skresources/BUILD.gn
-# -------------------------------------
-# static_library("skresources")
-add_library(Skia_skresources INTERFACE)
-add_library(Skia::skresources ALIAS Skia_skresources)
-
-# config("public_config")
-#include_dirs = [ "include" ]
-set_property(TARGET Skia_skresources APPEND PROPERTY
-  INTERFACE_INCLUDE_DIRECTORIES "${skia_MODULES_DIR}/skresources/include"
-)
-
-set_property(TARGET Skia_skresources APPEND PROPERTY
-  INTERFACE_LINK_LIBRARIES
-    Skia::skia
-)
-
-if(@skia_use_ffmpeg@)
-  set_property(TARGET Skia_skresources APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      SkiaInternal_video_decoder
-  )
-endif()
-
-set_and_check(skresources_LIB "${skia_LIB_DIR}/@skresources_FILE_NAME@")
-skia_set_imported_location(Skia_skresources STATIC
-  "${skresources_LIB}"
-)
-
-
-# -------------------------------------
-# modules/sksg/BUILD.gn
-# -------------------------------------
-# skia_component("sksg")
-add_library(Skia_sksg INTERFACE)
-add_library(Skia::sksg ALIAS Skia_sksg)
-
-#if(skia_enable_skottie)
-if(@skia_enable_skottie@)
-  # config("public_config")
-  #include_dirs = [ "include" ]
-  set_property(TARGET Skia_sksg APPEND PROPERTY
-    INTERFACE_INCLUDE_DIRECTORIES "${skia_MODULES_DIR}/sksg/include"
-  )
-
-  set_and_check(sksg_LIB "${skia_LIB_DIR}/@sksg_FILE_NAME@")
-  skia_set_imported_location(Skia_sksg ${lib_type}
-    "${sksg_LIB}"
-  )
-
-  set_property(TARGET Skia_sksg APPEND PROPERTY
+  set_property(TARGET Skia::bentleyottmann APPEND PROPERTY
     INTERFACE_LINK_LIBRARIES
       Skia::skia
   )
 endif()
 
 
-
-# -------------------------------------
-# modules/skunicode/BUILD.gn
-# -------------------------------------
-#if(skia_use_icu)
-if(@skia_use_icu@)
-  # component("skunicode")
+#if(skia_enable_skunicode)
+if(@skia_enable_skunicode@)
   add_library(Skia::skunicode ${lib_type} IMPORTED)
 
-  # config("public_config") {
-  #include_dirs = [ "include" ]
   set_property(TARGET Skia::skunicode APPEND PROPERTY
     INTERFACE_INCLUDE_DIRECTORIES "${skia_MODULES_DIR}/skunicode/include"
   )
-  set_property(TARGET Skia::skunicode APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_UNICODE_AVAILABLE"
+
+  set_and_check(skunicode_core_LIB "${skia_DLL_DIR}/@skunicode_core_FILE_NAME@")
+  set_target_properties(Skia::skunicode PROPERTIES
+    IMPORTED_LOCATION "${skunicode_core_LIB}"
   )
-  #if(is_component_build)
-  if(@is_component_build@)
-    set_property(TARGET Skia::skunicode APPEND PROPERTY
-      INTERFACE_COMPILE_DEFINITIONS "SKUNICODE_DLL"
+
+  #if(is_win AND is_component_build)
+  if(@is_win@ AND @is_component_build@)
+    set_and_check(skunicode_core_DLL_LIB "${skia_LIB_DIR}/@skunicode_core_DLL_LIB_FILE_NAME@")
+    set_target_properties(Skia::skunicode PROPERTIES
+      IMPORTED_IMPLIB "${skunicode_core_DLL_LIB}"
     )
   endif()
 
-  set_and_check(skunicode_LIB "${skia_DLL_DIR}/@skunicode_FILE_NAME@")
-  set_target_properties(Skia::skunicode PROPERTIES
-    IMPORTED_LOCATION "${skunicode_LIB}"
-  )
-  #if(is_win AND is_component_build)
-  if(@is_win@ AND @is_component_build@)
-    set_and_check(skunicode_DLL_LIB "${skia_LIB_DIR}/@skunicode_DLL_LIB_FILE_NAME@")
-    set_target_properties(Skia::skunicode PROPERTIES
-      IMPORTED_IMPLIB "${skunicode_DLL_LIB}"
-    )
-  endif()
   set_property(TARGET Skia::skunicode APPEND PROPERTY
     INTERFACE_LINK_LIBRARIES
       Skia::skia
   )
 
-  # only available for Android at the moment
-  #if(skia_use_runtime_icu AND (is_android OR is_linux))
-  if(@skia_use_runtime_icu@ AND (@is_android@ OR @is_linux@))
-    # deps += [ "//third_party/icu:headers" ]
-  endif()
+  #if(skia_use_icu)
+  if(@skia_use_icu@)
+    add_library(Skia::skunicode_icu ${lib_type} IMPORTED)
 
-  #if(export_icu_from_skia AND is_component_build)
-  if(@export_icu_from_skia@ AND @is_component_build@)
-    set_property(TARGET Skia::skunicode APPEND PROPERTY
+    set_property(TARGET Skia::skunicode_icu APPEND PROPERTY
+      INTERFACE_INCLUDE_DIRECTORIES "${skia_MODULES_DIR}/skunicode/include"
+    )
+
+    set_and_check(skunicode_icu_LIB "${skia_DLL_DIR}/@skunicode_icu_FILE_NAME@")
+    set_target_properties(Skia::skunicode_icu PROPERTIES
+      IMPORTED_LOCATION "${skunicode_icu_LIB}"
+    )
+
+    #if(is_win AND is_component_build)
+    if(@is_win@ AND @is_component_build@)
+      set_and_check(skunicode_icu_DLL_LIB "${skia_LIB_DIR}/@skunicode_icu_DLL_LIB_FILE_NAME@")
+      set_target_properties(Skia::skunicode_icu PROPERTIES
+        IMPORTED_IMPLIB "${skunicode_icu_DLL_LIB}"
+      )
+    endif()
+
+    set_property(TARGET Skia::skunicode_icu APPEND PROPERTY
       INTERFACE_LINK_LIBRARIES
-        SkiaInternal_icu
+        Skia::skunicode
     )
   endif()
 endif()
 
 
-# -------------------------------------
-# third_party/icu/BUILD.gn
-# -------------------------------------
-#if(skia_use_icu AND NOT skia_use_system_icu)
-if(@skia_use_icu@ AND NOT @skia_use_system_icu@)
-  set_and_check(icudata_LIB "${skia_DLL_DIR}/@icudata_FILE_NAME@")
-  add_library(Skia::icudata UNKNOWN IMPORTED)
-  set_target_properties(Skia::icudata PROPERTIES
-    IMPORTED_LOCATION "${icudata_LIB}"
-    IMPORTED_NO_SONAME ON
-  )
-  #if(cmake_gen_config)
-  if(@cmake_gen_config@)
-    add_dependencies(Skia::icudata build_skia)
-  endif()
-
-  #if(export_icu_from_skia)
-  if(@export_icu_from_skia@)
-    #if(is_component_build)
-    if(@is_component_build@)
-      add_library(SkiaInternal_icu_common SHARED IMPORTED)
-      skia_set_target_properties(SkiaInternal_icu_common)
-      set_and_check(icu_common_LIB "${skia_DLL_DIR}/@icu_common_FILE_NAME@")
-      set_target_properties(SkiaInternal_icu_common PROPERTIES
-        IMPORTED_LOCATION "${icu_common_LIB}"
-      )
-      #if(is_win)
-      if(@is_win@)
-        set_and_check(icu_common_DLL_LIB "${skia_LIB_DIR}/@icu_common_DLL_LIB_FILE_NAME@")
-        set_target_properties(SkiaInternal_icu_common PROPERTIES
-          IMPORTED_IMPLIB "${icu_common_DLL_LIB}"
-        )
-      endif()
-
-      add_library(SkiaInternal_icu SHARED IMPORTED)
-      add_library(ICU::ICU ALIAS SkiaInternal_icu)
-      skia_set_target_properties(SkiaInternal_icu)
-      set_and_check(icu_LIB "${skia_DLL_DIR}/@icu_FILE_NAME@")
-      set_target_properties(SkiaInternal_icu PROPERTIES
-        IMPORTED_LOCATION "${icu_LIB}"
-      )
-      #if(is_win)
-      if(@is_win@)
-        set_and_check(icu_DLL_LIB "${skia_LIB_DIR}/@icu_DLL_LIB_FILE_NAME@")
-        set_target_properties(SkiaInternal_icu PROPERTIES
-          IMPORTED_IMPLIB "${icu_DLL_LIB}"
-        )
-      endif()
-      set_property(TARGET SkiaInternal_icu APPEND PROPERTY
-        INTERFACE_LINK_LIBRARIES
-          SkiaInternal_icu_common
-      )
-
-      set_property(TARGET SkiaInternal_icu APPEND PROPERTY
-        INTERFACE_INCLUDE_DIRECTORIES "${skia_ICU_INCLUDE_DIR}"
-      )
-
-      set_property(TARGET SkiaInternal_icu APPEND PROPERTY
-        INTERFACE_COMPILE_DEFINITIONS
-          "U_USING_ICU_NAMESPACE=0"
-          "U_DISABLE_RENAMING=0"
-          "U_DISABLE_VERSION_SUFFIX=0"
-      )
-      #if(is_win)
-      if(@is_win@)
-        set_property(TARGET SkiaInternal_icu APPEND PROPERTY
-          INTERFACE_COMPILE_DEFINITIONS "U_NOEXCEPT="
-        )
-      endif()
-
-    elseif(TARGET Skia::skunicode)  # static ICU is in skunicode.
-      add_library(ICU::ICU ALIAS Skia::skunicode)
-
-      set_property(TARGET Skia::skunicode APPEND PROPERTY
-        INTERFACE_INCLUDE_DIRECTORIES "${skia_ICU_INCLUDE_DIR}"
-      )
-
-      set_property(TARGET Skia::skunicode APPEND PROPERTY
-        INTERFACE_COMPILE_DEFINITIONS
-          "U_STATIC_IMPLEMENTATION"
-          "U_USING_ICU_NAMESPACE=0"
-          "U_DISABLE_RENAMING=0"
-          "U_DISABLE_VERSION_SUFFIX=0"
-      )
-      #if(is_win)
-      if(@is_win@)
-        set_property(TARGET Skia::skunicode APPEND PROPERTY
-          INTERFACE_COMPILE_DEFINITIONS "U_NOEXCEPT="
-        )
-      endif()
-    endif()
-  endif()
-endif()
-
-
-# -------------------------------------
-# modules/skshaper/BUILD.gn
-# -------------------------------------
 #if(skia_enable_skshaper)
 if(@skia_enable_skshaper@)
-  # component("skshaper")
   add_library(Skia::skshaper ${lib_type} IMPORTED)
 
-  # config("public_config")
-  #include_dirs = [ "include" ]
   set_property(TARGET Skia::skshaper APPEND PROPERTY
     INTERFACE_INCLUDE_DIRECTORIES "${skia_MODULES_DIR}/skshaper/include"
   )
-  #if(is_component_build)
-  if(@is_component_build@)
-    set_property(TARGET Skia::skshaper APPEND PROPERTY
-      INTERFACE_COMPILE_DEFINITIONS "SKSHAPER_DLL"
-    )
-  endif()
-  #if(skia_use_fonthost_mac)
-  if(@skia_use_fonthost_mac@)
-    set_property(TARGET Skia::skshaper APPEND PROPERTY
-      INTERFACE_COMPILE_DEFINITIONS "SK_SHAPER_CORETEXT_AVAILABLE"
-    )
-  endif()
-  #if(skia_use_icu AND skia_use_harfbuzz)
-  if(@skia_use_icu@ AND @skia_use_harfbuzz@)
-    set_property(TARGET Skia::skshaper APPEND PROPERTY
-      INTERFACE_COMPILE_DEFINITIONS "SK_SHAPER_HARFBUZZ_AVAILABLE"
-    )
-  endif()
 
   set_and_check(skshaper_LIB "${skia_DLL_DIR}/@skshaper_FILE_NAME@")
   set_target_properties(Skia::skshaper PROPERTIES
     IMPORTED_LOCATION "${skshaper_LIB}"
   )
+
   #if(is_win AND is_component_build)
   if(@is_win@ AND @is_component_build@)
     set_and_check(skshaper_DLL_LIB "${skia_LIB_DIR}/@skshaper_DLL_LIB_FILE_NAME@")
@@ -1310,160 +387,42 @@ if(@skia_enable_skshaper@)
       IMPORTED_IMPLIB "${skshaper_DLL_LIB}"
     )
   endif()
+
   set_property(TARGET Skia::skshaper APPEND PROPERTY
     INTERFACE_LINK_LIBRARIES
       Skia::skia
   )
 
-  #if(skia_use_fonthost_mac)
-  if(@skia_use_fonthost_mac@)
-    #if(is_mac)
-    if(@is_mac@)
-      skia_find_framework("ApplicationServices")
-      set_property(TARGET Skia::skshaper APPEND PROPERTY
-        INTERFACE_LINK_LIBRARIES SkiaInternal_ApplicationServices
-      )
-    endif()
-    #if(is_ios)
-    if(@is_ios@)
-      skia_find_framework("CoreFoundation")
-      set_property(TARGET Skia::skshaper APPEND PROPERTY
-        INTERFACE_LINK_LIBRARIES SkiaInternal_CoreFoundation
-      )
-      skia_find_framework("CoreText")
-      set_property(TARGET Skia::skshaper APPEND PROPERTY
-        INTERFACE_LINK_LIBRARIES SkiaInternal_CoreText
-      )
-    endif()
-  endif()
   #if(skia_use_icu AND skia_use_harfbuzz)
   if(@skia_use_icu@ AND @skia_use_harfbuzz@)
     set_property(TARGET Skia::skshaper APPEND PROPERTY
-      INTERFACE_LINK_LIBRARIES Skia::skunicode
+      INTERFACE_LINK_LIBRARIES Skia::skunicode_icu
     )
   endif()
 endif()
 
 
-# -------------------------------------
-# experimental/sktext/BUILD.gn
-# -------------------------------------
-#if(skia_enable_sktext AND skia_enable_skshaper AND skia_use_icu
-#    AND skia_use_harfbuzz)
-if(@skia_enable_sktext@ AND @skia_enable_skshaper@ AND @skia_use_icu@
-    AND @skia_use_harfbuzz@)
-  #component("sktext")
-  add_library(Skia::sktext ${lib_type} IMPORTED)
-  set_and_check(sktext_LIB "${skia_DLL_DIR}/@sktext_FILE_NAME@")
-  set_target_properties(Skia::sktext PROPERTIES
-    IMPORTED_LOCATION "${sktext_LIB}"
-  )
-  ##if(is_win AND is_component_build)
-  #if(@is_win@ AND @is_component_build@)
-  #  set_and_check(sktext_DLL_LIB "${skia_LIB_DIR}/@sktext_DLL_LIB_FILE_NAME@")
-  #  set_target_properties(Skia::sktext PROPERTIES
-  #    IMPORTED_IMPLIB "${sktext_DLL_LIB}"
-  #  )
-  #endif()
-  set_property(TARGET Skia::sktext APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      Skia::skia
-      Skia::skshaper
-      Skia::skunicode
-  )
-endif()
-
-
-# -------------------------------------
-# modules/particles/BUILD.gn
-# -------------------------------------
-#if(skia_enable_particles)
-if(@skia_enable_particles@)
-  # static_library("particles")
-  add_library(Skia_particles INTERFACE)
-  add_library(Skia::particles ALIAS Skia_particles)
-
-  # config("public_config")
-  #include_dirs = [ "include" ]
-  set_property(TARGET Skia_particles APPEND PROPERTY
-    INTERFACE_INCLUDE_DIRECTORIES "${skia_MODULES_DIR}/particles/include"
-  )
-
-  set_property(TARGET Skia_particles APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      Skia::skia
-      Skia_skresources
-  )
-
-  set_and_check(particles_LIB "${skia_LIB_DIR}/@particles_FILE_NAME@")
-  skia_set_imported_location(Skia_particles STATIC
-    "${particles_LIB}"
-  )
-endif()
-
-
-# -------------------------------------
-# modules/skottie/BUILD.gn
-# -------------------------------------
-#if(skia_enable_skottie)
-if(@skia_enable_skottie@)
-  # skia_component("skottie")
-  add_library(Skia::skottie ${lib_type} IMPORTED)
-
-  # config("public_config")
-  #include_dirs = [ "include" ]
-  set_property(TARGET Skia::skottie APPEND PROPERTY
-    INTERFACE_INCLUDE_DIRECTORIES "${skia_MODULES_DIR}/skottie/include"
-  )
-  set_property(TARGET Skia::skottie APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_ENABLE_SKOTTIE"
-  )
-
-  set_and_check(skottie_LIB "${skia_LIB_DIR}/@skottie_FILE_NAME@")
-  set_target_properties(Skia::skottie PROPERTIES
-    IMPORTED_LOCATION "${skottie_LIB}"
-  )
-  set_property(TARGET Skia::skottie APPEND PROPERTY
-    INTERFACE_LINK_LIBRARIES
-      Skia::skia
-      Skia_skresources
-      Skia::sksg
-      Skia::skshaper
-      Skia::skunicode
-  )
-endif()
-
-
-# -------------------------------------
-# modules/skparagraph/BUILD.gn
-# -------------------------------------
-#if(skia_enable_skparagraph AND skia_enable_skshaper AND skia_use_icu
-#    AND skia_use_harfbuzz)
-if(@skia_enable_skparagraph@ AND @skia_enable_skshaper@ AND @skia_use_icu@
-    AND @skia_use_harfbuzz@)
-  # skia_component("skparagraph")
+#if(skia_enable_skparagraph AND skia_enable_skshaper AND skia_use_icu AND skia_use_harfbuzz)
+if(@skia_enable_skparagraph@ AND @skia_enable_skshaper@ AND @skia_use_icu@ AND @skia_use_harfbuzz@)
   add_library(Skia::skparagraph ${lib_type} IMPORTED)
 
-  # config("public_config") {
-  #include_dirs = [ "include", "utils"]
   set_property(TARGET Skia::skparagraph APPEND PROPERTY
     INTERFACE_INCLUDE_DIRECTORIES "${skia_MODULES_DIR}/skparagraph/include"
-  )
-  set_property(TARGET Skia::skparagraph APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_ENABLE_PARAGRAPH"
   )
 
   set_and_check(skparagraph_LIB "${skia_DLL_DIR}/@skparagraph_FILE_NAME@")
   set_target_properties(Skia::skparagraph PROPERTIES
     IMPORTED_LOCATION "${skparagraph_LIB}"
   )
-  ##if(is_win AND is_component_build)
-  #if(@is_win@ AND @is_component_build@)
-  #  set_and_check(skparagraph_DLL_LIB "${skia_LIB_DIR}/@skparagraph_DLL_LIB_FILE_NAME@")
-  #  set_target_properties(Skia::skparagraph PROPERTIES
-  #    IMPORTED_IMPLIB "${skparagraph_DLL_LIB}"
-  #  )
-  #endif()
+
+  #if(is_win AND is_component_build)
+  if(@is_win@ AND @is_component_build@)
+    set_and_check(skparagraph_DLL_LIB "${skia_LIB_DIR}/@skparagraph_DLL_LIB_FILE_NAME@")
+    set_target_properties(Skia::skparagraph PROPERTIES
+      IMPORTED_IMPLIB "${skparagraph_DLL_LIB}"
+    )
+  endif()
+
   set_property(TARGET Skia::skparagraph APPEND PROPERTY
     INTERFACE_LINK_LIBRARIES
       Skia::skia
@@ -1473,44 +432,65 @@ if(@skia_enable_skparagraph@ AND @skia_enable_skshaper@ AND @skia_use_icu@
 endif()
 
 
-# -------------------------------------
-# modules/svg/BUILD.gn
-# -------------------------------------
 #if(skia_enable_svg AND skia_use_expat)
 if(@skia_enable_svg@ AND @skia_use_expat@)
-  # skia_component("svg")
   add_library(Skia::svg ${lib_type} IMPORTED)
 
-  # config("public_config")
-  #include_dirs = [ "include" ]
   set_property(TARGET Skia::svg APPEND PROPERTY
     INTERFACE_INCLUDE_DIRECTORIES "${skia_MODULES_DIR}/svg/include"
-  )
-  set_property(TARGET Skia::svg APPEND PROPERTY
-    INTERFACE_COMPILE_DEFINITIONS "SK_ENABLE_SVG"
   )
 
   set_and_check(svg_LIB "${skia_LIB_DIR}/@svg_FILE_NAME@")
   set_target_properties(Skia::svg PROPERTIES
     IMPORTED_LOCATION "${svg_LIB}"
   )
+
+  #if(is_win AND is_component_build)
+  if(@is_win@ AND @is_component_build@)
+    set_and_check(svg_DLL_LIB "${skia_LIB_DIR}/@svg_DLL_LIB_FILE_NAME@")
+    set_target_properties(Skia::svg PROPERTIES
+      IMPORTED_IMPLIB "${svg_DLL_LIB}"
+    )
+  endif()
+
   set_property(TARGET Skia::svg APPEND PROPERTY
     INTERFACE_LINK_LIBRARIES
       Skia::skia
-      Skia_skresources
       Skia::skshaper
+      Skia::skunicode
   )
 endif()
 
 
-# -------------------------------------
-# modules/skplaintexteditor/BUILD.gn
-# -------------------------------------
-#if(skia_use_icu AND skia_use_harfbuzz)
-if(@skia_use_icu@ AND @skia_use_harfbuzz@)
-  # NOTE: This is application
+#if(skia_use_icu AND NOT skia_use_system_icu)
+if(@skia_use_icu@ AND NOT @skia_use_system_icu@)
+  add_library(Skia::icudata UNKNOWN IMPORTED)
+
+  set_and_check(icudata_LIB "${skia_DLL_DIR}/@icudata_FILE_NAME@")
+  set_target_properties(Skia::icudata PROPERTIES
+    IMPORTED_LOCATION "${icudata_LIB}"
+    IMPORTED_NO_SONAME ON
+  )
+
+  #if(cmake_gen_config)
+  if(@cmake_gen_config@)
+    add_dependencies(Skia::icudata build_skia)
+  endif()
 endif()
 
+
+# NOTE: We can not link to dawn::webgpu_dawn due to <build>/gen/include
+# because CMake checks it during config phase. We can link it only via
+# target_link_libraries in the main project.
+# We do not link to ICU for the sake of consistency.
+#set_property(TARGET Skia::skia APPEND PROPERTY
+#  INTERFACE_LINK_LIBRARIES
+#    dawn::webgpu_dawn
+#)
+#set_property(TARGET Skia::skunicode_icu APPEND PROPERTY
+#  INTERFACE_LINK_LIBRARIES
+#    ICU::io ICU::i18n ICU::uc ICU::data
+#)
 
 
 # -------------------------------------
